@@ -73,7 +73,6 @@ process makeIvarBedfile {
     #!/usr/bin/env python3
   
     import csv
-
     bedrows = []
     with open("${schemeRepo}/${params.schemeDir}/${params.scheme}/${params.schemeVersion}/nCoV-2019.scheme.bed", newline='') as bedfile:
         reader = csv.reader(bedfile, delimiter='\t')
@@ -84,7 +83,6 @@ process makeIvarBedfile {
             else: 
                 row.append('-')
             bedrows.append(row)
-
     with open('ivar.bed', 'w', newline='') as bedfile:
         writer = csv.writer(bedfile, delimiter='\t')
         for row in bedrows:
@@ -120,6 +118,29 @@ process trimPrimerSequences {
         """
 }
 
+process callVariants {
+
+    tag { sampleName }
+
+    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.variants.tsv", mode: 'copy'
+
+    input:
+    tuple(sampleName, path(bam), path(ref))
+
+    output:
+    tuple sampleName, path("${sampleName}.variants.tsv")
+
+    script:
+        """
+        samtools mpileup -A -d 0 --reference ${ref} -B -Q 0 ${bam} |\
+        ivar variants -r ${ref} -m ${params.ivarMinDepth} -p ${sampleName}.variants -q ${params.ivarMinVariantQuality} -t ${params.ivarMinFreqThreshold}
+        """
+}
+
+process callVariantsLoFreq {
+    
+}
+
 process makeConsensus {
 
     tag { sampleName }
@@ -139,4 +160,3 @@ process makeConsensus {
         -n N -p ${sampleName}.primertrimmed.consensus
         """
 }
-

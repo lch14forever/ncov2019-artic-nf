@@ -1,3 +1,4 @@
+
 name: artic-ncov2019-illumina
 channels:
   - conda-forge
@@ -5,7 +6,14 @@ channels:
   - defaults
 dependencies:
   - python=3
+  - biopython=1.76
   - bwa=0.7.17=pl5.22.0_2
   - samtools=1.9
   - trim-galore=0.6.5
-  - ivar=1.0.1
+  - ivar=1.1_beta
+  - bcftools=1.8
+  - bedtools=2.29.2
+  - biopython=1.76
+  - lofreq=2.1.4
+  - pyvcf=0.6.8
+
