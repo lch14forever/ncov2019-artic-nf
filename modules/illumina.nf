@@ -137,8 +137,25 @@ process callVariants {
         """
 }
 
-process callVariantsLoFreq {
-    
+process callVariantsLofreq {
+
+    tag { sampleName }
+
+    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.lofreq.vcf", mode: 'copy'
+
+    input:
+    tuple(sampleName, path(bam), path(ref))
+
+    output:
+    tuple sampleName, path("${sampleName}.lofreq.vcf")
+
+    script:
+        """
+        lofreq indelqual --dindel ${bam} -f ${ref} |\
+        lofreq call --call-indels --min-bq ${params.lofreqMinBaseQuality} --min-alt-bq ${params.lofreqMinBaseQuality} \
+        --min-mq ${params.lofreqMinMapQuality} --no-default-filter --use-orphan --max-depth 1000000 \
+        --min-cov ${params.lofreqMinCov} -f ${ref} -o ${sampleName}.lofreq.vcf -
+        """
 }
 
 process makeConsensus {
