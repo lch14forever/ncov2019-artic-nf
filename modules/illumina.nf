@@ -1,3 +1,43 @@
+process illuminaDownloadScheme {
+    tag params.scriptsRepoURL
+
+    label 'internet'
+
+    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "scripts", mode: "copy"
+
+    output:
+    path "scripts/${params.scriptsDir}/make_depth_mask.py" , emit: depthmask
+    path "scripts/${params.scriptsDir}/vcftagprimersites.py" , emit: vcftagprimersites
+    path "scripts/${params.scriptsDir}/*"
+
+    script:
+    """
+    git clone ${params.scriptsRepoURL} scripts
+    """
+}
+
+process makePythonPackage {
+
+    tag { sampleName }
+
+    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.lowcoverage.txt", mode: 'copy'
+
+    input:
+    tuple(sampleName, path(depthmask), path(vcftagprimersites))
+    
+    output:
+    tuple path("artic/"), emit: articpackage
+    
+    script:
+    """
+    #!/usr/bin/env python3
+    mkdir artic
+    touch artic/__init__.py
+    mv ${depthmask} artic/
+    mv ${vcftagprimersites} artic/
+    """
+}
+
 process readTrimming {
     /**
     * Trims paired fastq using trim_galore (https://github.com/FelixKrueger/TrimGalore)
@@ -155,6 +195,28 @@ process callVariantsLofreq {
         lofreq call --call-indels --min-bq ${params.lofreqMinBaseQuality} --min-alt-bq ${params.lofreqMinBaseQuality} \
         --min-mq ${params.lofreqMinMapQuality} --no-default-filter --use-orphan --max-depth 1000000 \
         --min-cov ${params.lofreqMinCov} -f ${ref} -o ${sampleName}.lofreq.vcf -
+        """
+}
+
+process findLowCoverageRegions {
+
+    tag { sampleName }
+
+    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.lowcoverage.txt", mode: 'copy'
+
+    input:
+    tuple(sampleName, path(bam), path(ref), path(depthmask), path(vcftagprimersites))
+
+    output:
+    tuple sampleName, path("${sampleName}.lowcoverage.txt")
+
+    script:
+        """
+        sed 's/from .vcftagprimersites import read_bed_file/from vcftagprimersites import read_bed_file/g' ${depthmask} > edited_depth_mask.py
+        
+        #broken due to relative import
+        python edited_depth_mask.py --depth ${params.minDepthThreshold} ${ref} \
+        ${bam} ${sampleName}.lowcoverage.txt
         """
 }
 

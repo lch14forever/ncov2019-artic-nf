@@ -4,13 +4,16 @@
 nextflow.preview.dsl = 2
 
 // import modules
-include {articDownloadScheme } from '../modules/artic.nf' 
+include {articDownloadScheme} from '../modules/artic.nf' 
+include {illuminaDownloadScheme} from '../modules/illumina.nf'
+include {makePythonPackage} from '../modules/illumina.nf'
 include {makeIvarBedfile} from '../modules/illumina.nf' 
 include {readTrimming} from '../modules/illumina.nf' 
 include {readMapping} from '../modules/illumina.nf' 
 include {trimPrimerSequences} from '../modules/illumina.nf' 
 include {callVariants} from '../modules/illumina.nf'
 include {callVariantsLofreq} from '../modules/illumina.nf'
+include {findLowCoverageRegions} from '../modules/illumina.nf'
 include {makeConsensus} from '../modules/illumina.nf' 
 
 include {makeQCCSV} from '../modules/qc.nf'
@@ -28,6 +31,10 @@ workflow sequenceAnalysis {
 
     main:
       articDownloadScheme()
+      
+      illuminaDownloadScheme()
+
+      //makePythonPackage(illuminaDownloadScheme.out.depthmask.combine(illuminaDownloadScheme.out.vcftagprimersites))
 
       makeIvarBedfile(articDownloadScheme.out.scheme)
 
@@ -40,6 +47,8 @@ workflow sequenceAnalysis {
       callVariants(trimPrimerSequences.out.ptrim.combine(articDownloadScheme.out.reffasta))
 
       callVariantsLofreq(trimPrimerSequences.out.ptrim.combine(articDownloadScheme.out.reffasta))
+
+      findLowCoverageRegions(trimPrimerSequences.out.ptrim.combine(articDownloadScheme.out.reffasta).combine(illuminaDownloadScheme.out.depthmask).combine(illuminaDownloadScheme.out.vcftagprimersites))
 
       makeConsensus(trimPrimerSequences.out.ptrim)
 
