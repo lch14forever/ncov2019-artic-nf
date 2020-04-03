@@ -6,36 +6,14 @@ process illuminaDownloadScheme {
     publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "scripts", mode: "copy"
 
     output:
-    path "scripts/${params.scriptsDir}/make_depth_mask.py" , emit: depthmask
-    path "scripts/${params.scriptsDir}/vcftagprimersites.py" , emit: vcftagprimersites
-    path "scripts/${params.scriptsDir}/*"
+        path "scripts/${params.scriptsDir}/make_depth_mask.py" , emit: depthmask
+        path "scripts/${params.scriptsDir}/vcftagprimersites.py" , emit: vcftagprimersites
+        path "scripts/${params.scriptsDir}/*"
 
     script:
-    """
-    git clone ${params.scriptsRepoURL} scripts
-    """
-}
-
-process makePythonPackage {
-
-    tag { sampleName }
-
-    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.lowcoverage.txt", mode: 'copy'
-
-    input:
-    tuple(sampleName, path(depthmask), path(vcftagprimersites))
-    
-    output:
-    tuple path("artic/"), emit: articpackage
-    
-    script:
-    """
-    #!/usr/bin/env python3
-    mkdir artic
-    touch artic/__init__.py
-    mv ${depthmask} artic/
-    mv ${vcftagprimersites} artic/
-    """
+        """
+        git clone ${params.scriptsRepoURL} scripts
+        """
 }
 
 process readTrimming {
@@ -52,18 +30,18 @@ process readTrimming {
     cpus 2
 
     input:
-    tuple(sampleName, path(forward), path(reverse))
+        tuple(sampleName, path(forward), path(reverse))
 
     output:
-    tuple(sampleName, path("*_val_1.fq.gz"), path("*_val_2.fq.gz")) optional true
+        tuple(sampleName, path("*_val_1.fq.gz"), path("*_val_2.fq.gz")) optional true
 
     script:
-    """
-    if [[ \$(gunzip -c ${forward} | head -n4 | wc -l) -eq 0 ]]; then
-      exit 0
-    else
-      trim_galore --paired $forward $reverse
-    fi
+        """
+        if [[ \$(gunzip -c ${forward} | head -n4 | wc -l) -eq 0 ]]; then
+            exit 0
+        else
+            trim_galore --paired $forward $reverse
+        fi
     """
 }
 
@@ -103,31 +81,31 @@ process makeIvarBedfile {
     publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "ivar.bed", mode: 'copy'
 
     input:
-    file(schemeRepo)
+        file(schemeRepo)
 
     output:
-    file("ivar.bed")
+        file("ivar.bed")
 
     script:
-    """
-    #!/usr/bin/env python3
+        """
+        #!/usr/bin/env python3
   
-    import csv
-    bedrows = []
-    with open("${schemeRepo}/${params.schemeDir}/${params.scheme}/${params.schemeVersion}/nCoV-2019.scheme.bed", newline='') as bedfile:
-        reader = csv.reader(bedfile, delimiter='\t')
-        for row in reader:
-            row[4] = '60'
-            if row[3].endswith('LEFT'):
-                 row.append('+')
-            else: 
-                row.append('-')
-            bedrows.append(row)
-    with open('ivar.bed', 'w', newline='') as bedfile:
-        writer = csv.writer(bedfile, delimiter='\t')
-        for row in bedrows:
-            writer.writerow(row)
-    """
+        import csv
+        bedrows = []
+        with open("${schemeRepo}/${params.schemeDir}/${params.scheme}/${params.schemeVersion}/nCoV-2019.scheme.bed", newline='') as bedfile:
+            reader = csv.reader(bedfile, delimiter='\t')
+            for row in reader:
+                row[4] = '60'
+                if row[3].endswith('LEFT'):
+                    row.append('+')
+                else: 
+                    row.append('-')
+                bedrows.append(row)
+        with open('ivar.bed', 'w', newline='') as bedfile:
+            writer = csv.writer(bedfile, delimiter='\t')
+            for row in bedrows:
+                writer.writerow(row)
+        """
 }
 
 process trimPrimerSequences {
@@ -138,11 +116,11 @@ process trimPrimerSequences {
     publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.mapped.primertrimmed.sorted.bam", mode: 'copy'
 
     input:
-    tuple(path(bedfile), sampleName, path(ref), path(bam))
+        tuple(path(bedfile), sampleName, path(ref), path(bam))
 
     output:
-    tuple sampleName, path("${sampleName}.mapped.bam"), emit: mapped
-    tuple sampleName, path("${sampleName}.mapped.primertrimmed.sorted.bam" ), emit: ptrim
+        tuple sampleName, path("${sampleName}.mapped.bam"), emit: mapped
+        tuple sampleName, path("${sampleName}.mapped.primertrimmed.sorted.bam" ), emit: ptrim
 
     script:
     if (params.allowNoprimer){
@@ -165,10 +143,10 @@ process callVariants {
     publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.variants.tsv", mode: 'copy'
 
     input:
-    tuple(sampleName, path(bam), path(ref))
+        tuple(sampleName, path(bam), path(ref))
 
     output:
-    tuple sampleName, path("${sampleName}.variants.tsv")
+        tuple sampleName, path("${sampleName}.variants.tsv")
 
     script:
         """
@@ -184,10 +162,10 @@ process callVariantsLofreq {
     publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.lofreq.vcf", mode: 'copy'
 
     input:
-    tuple(sampleName, path(bam), path(ref))
+        tuple(sampleName, path(bam), path(ref))
 
     output:
-    tuple sampleName, path("${sampleName}.lofreq.vcf")
+        tuple sampleName, path("${sampleName}.lofreq.vcf"), emit: variants
 
     script:
         """
@@ -205,10 +183,10 @@ process findLowCoverageRegions {
     publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.lowcoverage.txt", mode: 'copy'
 
     input:
-    tuple(sampleName, path(bam), path(ref), path(depthmask), path(vcftagprimersites))
+        tuple(sampleName, path(bam), path(ref), path(depthmask), path(vcftagprimersites))
 
     output:
-    tuple sampleName, path("${sampleName}.lowcoverage.txt")
+        tuple sampleName, path("${sampleName}.lowcoverage.txt")
 
     script:
         """
@@ -218,6 +196,28 @@ process findLowCoverageRegions {
         python edited_depth_mask.py --depth ${params.minDepthThreshold} ${ref} \
         ${bam} ${sampleName}.lowcoverage.txt
         """
+}
+
+process findVariantsInPrimerSites {
+
+    tag { sampleName }
+
+    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}*.vcf", mode: 'copy'
+
+    input:
+        tuple(sampleName, path(vcf), path(schemeRepo))
+
+    output:
+        tuple sampleName, path("${sampleName}.primersite.vcf"), path("${sampleName}.notprimersite.vcf")
+
+    script:
+        """
+        bedtools sort -i ${schemeRepo}/${params.schemeDir}/${params.scheme}/${params.schemeVersion}/nCoV-2019.scheme.bed > primers.sorted.bed
+        bedtools merge -i primers.sorted.bed > primers.merged.sorted.bed 
+        bedtools intersect -header -v -a ${vcf} -b primers.merged.sorted.bed >${sampleName}.notprimersite.vcf
+        bedtools intersect -header -a ${vcf} -b primers.merged.sorted.bed >${sampleName}.primersite.vcf
+        """
+
 }
 
 process makeConsensus {
