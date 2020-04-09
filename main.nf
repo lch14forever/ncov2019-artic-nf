@@ -43,6 +43,11 @@ if ( ! params.prefix ) {
      System.exit(1)
 }
 
+// AWSBatch sanity checking
+if(workflow.profile.contains('awsbatch')){
+    if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
+}
+
 
 // main workflow
 workflow {
