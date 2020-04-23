@@ -6,5 +6,5 @@ COPY environment.yml /
 RUN apt-get update && apt-get install -y g++ git make procps && apt-get clean -y
 RUN git clone https://github.com/artic-network/artic-ncov2019 /artic-ncov2019
 RUN /opt/conda/bin/conda env create -f /environment.yml && /opt/conda/bin/conda clean -a
-ENV PATH /opt/conda/envs/artic-ncov2019/bin:$PATH
-ENTRYPOINT ["/opt/conda/envs/artic-ncov2019/bin/artic"]
+ENV PATH /opt/conda/envs/fieldbioinformatics/bin:$PATH
+
