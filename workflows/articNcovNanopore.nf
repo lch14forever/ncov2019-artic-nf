@@ -16,6 +16,9 @@ include {writeQCSummaryCSV} from '../modules/qc.nf'
 include {collateSamples} from '../modules/upload.nf'
 
 
+//CSB5
+include {compressOutputs} from '../modules/send.nf'
+
 // import subworkflows
 include {CLIMBrsync} from './upload.nf'
 
@@ -59,6 +62,11 @@ workflow sequenceAnalysisNanopolish {
                            .join(articRemoveUnmappedReads.out))
 
 
+     compressOutputs(qc.pass.map{ it[0] }
+                            .join(articMinIONNanopolish.out.consensus_fasta, by: 0)
+			    .map {it[1]}
+			    .collect()
+			    )
 
     emit:
       qc_pass = collateSamples.out

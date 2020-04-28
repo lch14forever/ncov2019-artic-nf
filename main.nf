@@ -76,7 +76,7 @@ workflow {
    else {
        // Check to see if we have barcodes
        nanoporeBarcodeDirs = file("${params.basecalled_fastq}/barcode*", type: 'dir', maxdepth: 1 )
-       nanoporeNoBarcode = file("${params.basecalled_fastq}/*.fastq", type: 'file', maxdepth: 1)
+       nanoporeNoBarcode = file("${params.basecalled_fastq}/*.fastq*", type: 'file', maxdepth: 1)
 
        if( nanoporeBarcodeDirs ) {
             // Yes, barcodes!
@@ -110,3 +110,28 @@ workflow {
      
 }
 
+workflow.onComplete {
+        def msg = """\
+          This is an automatically generated email. Please direct your questions to Li Chenhao <lich@gis.a-star.edu.sg>.
+
+          See attachment file(s) for the consensus sequences.
+
+
+          Pipeline execution summary
+          ---------------------------
+          Duration    : ${workflow.duration}
+          Success     : ${workflow.success}
+          workDir     : ${workflow.workDir}
+          exit status : ${workflow.exitStatus}
+        """
+        .stripIndent()
+
+    if (workflow.success){
+    //if (false){
+    	sendMail(to: "${params.sequence_recepients}",
+		subject: 'ARTIC-network pipeline execution',
+		attach: "${params.outdir}/${params.prefix}_consensus.tar.gz",
+		body: msg
+	)
+    }
+}
