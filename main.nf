@@ -126,7 +126,7 @@ workflow.onComplete {
         """
         .stripIndent()
 
-    if (workflow.success){
+    if (workflow.success && params.mail){
     //if (false){
     	sendMail(to: "${params.sequence_recepients}",
 		subject: 'ARTIC-network pipeline execution',

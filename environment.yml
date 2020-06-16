@@ -20,6 +20,8 @@ dependencies:
   - python=3.6
   - pyvcf=0.6.8
   - samtools=1.9
+  - longshot=0.4.1
+  - medaka=0.12.1
   - pip:
       - git+https://github.com/artic-network/Porechop.git@v0.3.2pre
       - git+https://github.com/artic-network/fieldbioinformatics.git@cadbac3c2d786a8df8f3839901e5a147f9234933

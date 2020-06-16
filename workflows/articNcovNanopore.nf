@@ -105,6 +105,12 @@ workflow sequenceAnalysisMedaka {
                            .join(articMinIONMedaka.out.consensus_fasta, by: 0)
                            .join(articRemoveUnmappedReads.out))
 
+     compressOutputs(qc.pass.map{ it[0] }
+                            .join(articMinIONMedaka.out.consensus_fasta, by: 0)
+                            .map {it[1]}
+                            .collect()
+                            )
+
     emit:
       qc_pass = collateSamples.out
 
