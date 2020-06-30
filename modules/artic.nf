@@ -14,7 +14,10 @@ process articDownloadScheme{
 
     script:
     """
-    git clone ${params.schemeRepoURL} scheme
+    pre=`echo $params.schemeRepoURL | cut -c1-4`
+    cmd=\$([ "\$pre"  == "http" ] && echo "git clone " || echo "cp -r ")
+    
+    \$cmd \$(dirname `which qc.py`)/${params.schemeRepoURL} scheme
     """
 }
 
