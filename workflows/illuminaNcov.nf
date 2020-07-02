@@ -4,7 +4,7 @@
 nextflow.preview.dsl = 2
 
 // import modules
-include {articDownloadScheme } from '../modules/artic.nf' 
+include {articStageScheme } from '../modules/artic.nf' 
 include {readTrimming} from '../modules/illumina.nf' 
 include {indexReference} from '../modules/illumina.nf'
 include {readMapping} from '../modules/illumina.nf' 
@@ -29,8 +29,8 @@ workflow prepareReferenceFiles {
       Channel.fromPath(params.ref)
               .set{ ch_refFasta }
     } else {
-      articDownloadScheme()
-      articDownloadScheme.out.reffasta
+      articStageScheme()
+      articStageScheme.out.reffasta
                           .set{ ch_refFasta }
     }
 
@@ -69,7 +69,7 @@ workflow prepareReferenceFiles {
              .set{ ch_bedFile }
 
     } else {
-      articDownloadScheme.out.bed
+      articStageScheme.out.bed
                          .set{ ch_bedFile }
     }
 

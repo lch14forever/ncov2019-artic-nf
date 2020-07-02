@@ -4,7 +4,7 @@
 nextflow.preview.dsl = 2
 
 // import modules
-include {articDownloadScheme} from '../modules/artic.nf' 
+include {articStageScheme} from '../modules/artic.nf' 
 include {articGuppyPlex} from '../modules/artic.nf' 
 include {articMinIONNanopolish} from  '../modules/artic.nf' 
 include {articMinIONMedaka} from  '../modules/artic.nf'
@@ -31,12 +31,12 @@ workflow sequenceAnalysisNanopolish {
       ch_seqSummary
     
     main:
-      articDownloadScheme()
+      articStageScheme( Channel.fromPath( "${params.schemeRepo}" ) )
       
       articGuppyPlex(ch_runFastqDirs.flatten())
 
       articMinIONNanopolish(articGuppyPlex.out.fastq
-                                          .combine(articDownloadScheme.out.scheme)
+                                          .combine(articStageScheme.out.scheme)
                                           .combine(ch_fast5Pass)
                                           .combine(ch_seqSummary))
 
@@ -44,7 +44,7 @@ workflow sequenceAnalysisNanopolish {
 
       makeQCCSV(articMinIONNanopolish.out.ptrim
                                      .join(articMinIONNanopolish.out.consensus_fasta, by: 0)
-                                     .combine(articDownloadScheme.out.reffasta))
+                                     .combine(articStageScheme.out.reffasta))
 
       makeQCCSV.out.csv.splitCsv()
                        .unique()
@@ -78,17 +78,17 @@ workflow sequenceAnalysisMedaka {
       ch_runFastqDirs
 
     main:
-      articDownloadScheme()
-
+      articStageScheme( Channel.fromPath( "${params.schemeRepo}" ) )
+ 
       articGuppyPlex(ch_runFastqDirs.flatten())
 
       articMinIONMedaka(articGuppyPlex.out.fastq
-                                      .combine(articDownloadScheme.out.scheme))
+                                      .combine(articStageScheme.out.scheme))
 
       articRemoveUnmappedReads(articMinIONMedaka.out.mapped)
 
       makeQCCSV(articMinIONMedaka.out.ptrim.join(articMinIONMedaka.out.consensus_fasta, by: 0)
-                           .combine(articDownloadScheme.out.reffasta))
+                           .combine(articStageScheme.out.reffasta))
 
       makeQCCSV.out.csv.splitCsv()
                        .unique()

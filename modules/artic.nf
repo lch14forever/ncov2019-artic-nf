@@ -1,11 +1,11 @@
 // ARTIC processes
 
-process articDownloadScheme{
-    tag params.schemeRepoURL
 
-    label 'internet'
+process articStageScheme{
+    tag params.schemeRepo
 
-    publishDir "${params.outdir}/${task.process.replaceAll(":","_")}", pattern: "scheme", mode: "copy"
+    input:
+    path schemeRepo
 
     output:
     path "scheme/**/${params.schemeVersion}/*.reference.fasta" , emit: reffasta
@@ -14,15 +14,12 @@ process articDownloadScheme{
 
     script:
     """
-    pre=`echo $params.schemeRepoURL | cut -c1-4`
-    cmd=\$([ "\$pre"  == "http" ] && echo "git clone " || echo "cp -r ")
-    
-    \$cmd \$(dirname `which qc.py`)/${params.schemeRepoURL} scheme
+    cp -r $schemeRepo scheme
     """
 }
 
 process articGuppyPlex {
-    tag { samplePrefix + "-" + fastqDir }
+    tag { params.prefix + "-" + fastqDir }
 
     label 'largemem'
 
